@@ -1,0 +1,241 @@
+% Load an image
+img = imread('xyz.jpg'); % Replace 'xyz.jpg' with your image file
+% Convert the image to grayscale if it's in color
+if size(img, 3) == 3
+    img = rgb2gray(img);
+end
+% Add the VLFeat toolbox to MATLAB (adjust the path as needed)
+addpath('vlfeat-0.9.21/toolbox'); % Replace 'path_to_vlfeat' with the actual path
+% Initialize VLFeat
+run('vlfeat-0.9.21/toolbox/vl_setup.m');
+% Extract SIFT features
+[f, ~] = vl_sift(single(img));
+% Display the image
+imshow(img);
+hold on; % Allow plotting on the image
+% Plot SIFT feature points as circles
+plot(f(1,:), f(2,:), 'ro', 'MarkerSize', 5); % Adjust MarkerSize as needed
+hold off;
+title('Image with SIFT Features');
+% Define parameters for HOG calculation
+cellSize = 8;
+numBins = 9;
+% Calculate image gradients (Sobel operators)
+gx = imfilter(double(img), [-1, 0, 1], 'same', 'conv');
+gy = imfilter(double(img), [-1; 0; 1], 'same', 'conv');
+% Calculate gradient magnitude and orientation
+magnitude = sqrt(gx.^2 + gy.^2);
+orientation = atan2d(gy, gx);
+orientation = mod(orientation, 180); % Ensure orientation values are within [0, 180]
+% Create cells for HOG calculation
+numRows = floor(size(img, 1) / cellSize);
+numCols = floor(size(img, 2) / cellSize);
+hogFeatures = [];
+% Loop through each cell and compute HOG features
+for i = 1:numRows - 1
+    for j = 1:numCols - 1
+        cellMag = magnitude((i - 1) * cellSize + 1:i * cellSize, (j - 1) * cellSize + 1:j * cellSize);
+        cellOri = orientation((i - 1) * cellSize + 1:i * cellSize, (j - 1) * cellSize + 1:j * cellSize);
+        
+        % Calculate histogram of gradients for the cell
+        histogram = zeros(1, numBins);
+        for k = 1:numel(cellMag)
+            bin = floor(cellOri(k) / (180 / numBins)) + 1;
+            bin = min(max(bin, 1), numBins); % Ensure bin is within range [1, numBins]
+            histogram(bin) = histogram(bin) + cellMag(k);
+        end
+        
+        % Concatenate HOG features
+        hogFeatures = [hogFeatures histogram];
+    end
+end
+
+% Display the original image and HOG features
+figure;
+subplot(2, 1, 1);
+imshow(img);
+title('Original Image');
+
+subplot(2, 1, 2);
+bar(hogFeatures);
+title('HOG Features');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Read an image
+originalImage = imread('xyz.jpg'); % Replace 'example.jpg' with your image file
+% Display the original image
+subplot(2, 2, 1);
+imshow(originalImage);
+title('Original Image');
+% Convert the image to double precision for k-means
+imageData = double(originalImage);
+% Reshape the image data into a 2D matrix
+[m, n, ~] = size(imageData);
+imageData = reshape(imageData, m * n, 3);
+% Perform k-means clustering (adjust the number of clusters as needed)
+numClusters = 4; % Change the number of clusters as per your requirement
+[clusterIndices, clusterCenters] = kmeans(imageData, numClusters);
+% Reshape the clusterIndices back to the original image size
+segmented = reshape(clusterIndices, m, n);
+% Display the segmented image
+subplot(2, 2, 2);
+imshow(segmented, []);
+title('Segmented Image');
+% Create a mask for each segment
+segmentMasks = cell(numClusters, 1);
+for i = 1:numClusters
+mask = (segmented == i);
+
+segmentMasks{i} = mask;
+end
+% Display each segmented region
+for i = 1:numClusters
+subplot(2, 2, i + 2);
+segmentedRegion = originalImage;
+segmentedRegion(repmat(~segmentMasks{i}, [1, 1, 3])) = 0;
+imshow(segmentedRegion);
+title(['Segment ', num2str(i)]);
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Load the pre-trained YOLO model and configure it (using TensorFlow)
+net = importKerasNetwork('yolov3.h5'); % Replace with the path to your model
+inputSize = [416 416 3]; % Input size expected by the model
+% Load and preprocess the image dataset
+imageFolder = 'path_to_dataset_folder'; % Replace with your dataset folder
+imageFiles = dir(fullfile(imageFolder, '*.jpg')); % Assuming JPEG images
+numImages = length(imageFiles);
+for i = 1:numImages
+% Load and preprocess each image
+img = imread(fullfile(imageFolder, imageFiles(i).name));
+img = imresize(img, inputSize(1:2));
+img = img/255; % Normalize pixel values (if needed)
+% Perform object detection
+detections = detectYOLO(net, img);
+% Visualize and process detections (e.g., filter by confidence score)
+% Display detected objects with bounding boxes and labels
+imshow(img);
+hold on;
+for j = 1:numel(detections)
+bbox = detections(j).Location;
+label = detections(j).Label;
+score = detections(j).Confidence;
+if score > 0.5 % Adjust confidence threshold as needed
+rectangle('Position', bbox, 'EdgeColor', 'r', 'LineWidth', 2);
+text(bbox(1), bbox(2) - 10, label, 'Color', 'r', 'FontSize', 12);
+end
+end
+hold off;
+% Further processing or recognition for detected objects can be done here
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function exp7
+    % Load a sample image
+    originalImage = imread('xyz.jpg'); % Load a sample image
+
+    % Add noise to the image (you can adjust the noise level as needed)
+    noiseLevel = 25;
+    noisyImage = imnoise(originalImage, 'gaussian', 0, (noiseLevel/255)^2);
+
+    % Display the noisy image
+    subplot(1, 2, 1);
+    imshow(noisyImage);
+    title('Noisy Image');
+
+    % Image restoration using Total Variation regularization
+    lambda = 0.04; % Regularization parameter (adjust as needed)
+    numIterations = 90; % Number of iterations (adjust as needed)
+
+    % Perform TV regularization-based image restoration
+    restoredImage = tvdenoise(noisyImage, lambda, numIterations);
+
+    % Display the restored image
+    subplot(1, 2, 2);
+    imshow(restoredImage, []);
+    title('Restored Image');
+end
+
+function denoisedImage = tvdenoise(inputImage, lambda, numIterations)
+    u = double(inputImage); % Convert inputImage to double
+    [Dux, Duy] = gradient(u);
+
+    for k = 1:numIterations
+        u_old = u;
+
+        % Update u using TV denoising
+        u = u - lambda * divergence(Dux, Duy);
+
+        % Compute gradient
+        [Dux, Duy] = gradient(u);
+
+        % Projection step
+        normDu = sqrt(Dux.^2 + Duy.^2);
+        normDu(normDu == 0) = 1;
+        Dux = Dux ./ normDu;
+        Duy = Duy ./ normDu;
+
+        % Ensure the solution is within the range [0, 255]
+        u = min(max(u, 0), 255);
+
+        % Check for convergence
+        if norm(u - u_old, 'fro') / norm(u_old, 'fro') < 1e-6
+            break;
+        end
+    end
+
+    denoisedImage = uint8(u); % Convert back to uint8 for image representation
+end
+
+% Define the divergence function
+function div = divergence(Dux, Duy)
+    div = divergence2(Dux, Duy);
+end
+
+function div = divergence2(Dux, Duy)
+    [d2x, ~] = gradient(Dux);
+    [~, d2y] = gradient(Duy);
+    div = d2x + d2y;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Load the image
+originalImage = imread('xyz.jpg'); % Load your image here
+% Define the intensity range for enhancement
+minIntensity = 100; % Minimum intensity for enhancement
+maxIntensity = 200; % Maximum intensity for enhancement
+% Create a copy of the original image for enhancement
+enhancedImage = originalImage;
+% Apply intensity slicing
+enhancedImage(originalImage >= minIntensity & originalImage <= maxIntensity) = 255;
+% Display the original and enhanced images side by side
+subplot(1, 2, 1);
+imshow(originalImage);
+title('Original Image');
+subplot(1, 2, 2);
+imshow(enhancedImage);
+title('Enhanced Image');
+% Save the enhanced image if needed
+imwrite(enhancedImage, 'enhanced_image.jpg'); % Save the enhanced image
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Load the sample image
+originalImage = imread('xyz.jpg'); % Load your image here
+% Convert the image to grayscale if it's not already
+if size(originalImage, 3) == 3
+grayImage = rgb2gray(originalImage);
+else
+grayImage = originalImage;
+end
+% Apply Gaussian smoothing to reduce noise and enhance edges
+sigma = 1.5; % Adjust the Gaussian filter's standard deviation as needed
+smoothedImage = imgaussfilt(grayImage, sigma);
+% Perform Canny edge detection
+lowThreshold = 0.1; % Adjust the low threshold as needed (suggested range: 0.1-0.4)
+highThreshold = 0.3; % Adjust the high threshold as needed (suggested range: 0.3-0.7)
+edgeImage = edge(smoothedImage, 'Canny', [lowThreshold highThreshold]);
+% Display the original and edge-detected images side by side
+subplot(1, 2, 1);
+imshow(grayImage);
+title('Original Grayscale Image');
+subplot(1, 2, 2);
+imshow(edgeImage);
+title('Canny Edge Detection');
+% Save the edge-detected image if needed
+imwrite(edgeImage, 'canny_edges.jpg'); % Save the edge-detected image
