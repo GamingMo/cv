@@ -1,3 +1,176 @@
+exp1
+
+% Reading an image
+inputImage = imread('apple.jpeg'); % Replace 'input_image.jpg' with your image file
+
+% Display the original image
+subplot(2,2,1);
+imshow(inputImage);
+title('Original Image');
+
+% Writing an image
+outputFileName = 'output_image.jpg'; % Replace with your desired output file name
+imwrite(inputImage, outputFileName);
+fprintf('Image written as %s\n', outputFileName);
+
+% Conversion of images (e.g., grayscale)
+grayImage = rgb2gray(inputImage);
+
+% Display the grayscale image
+%figure;
+subplot(2,2,2);
+imshow(grayImage);
+title('Grayscale Image');
+
+% Complementing an image
+complementImage = imcomplement(grayImage);
+
+% Display the complemented image
+%figure;
+subplot(2,2,3);
+imshow(complementImage);
+title('Complemented Image');
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+task1
+
+% Read the grayscale image
+originalImage = imread('apple.jpeg');
+grayImage = rgb2gray(originalImage);
+
+% Display the original image
+subplot(1,2,1);
+imshow(grayImage);
+title('Original Grayscale Image');
+
+% Flip the image vertically
+flippedImage = flipud(grayImage);
+
+% Display the flipped image
+%figure;
+subplot(1,2,2);
+imshow(flippedImage);
+title('Flipped Grayscale Image');
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+task2
+
+% Read the image
+rgbImage = imread('apple.jpeg'); % Replace 'apple.jpeg' with your image file
+
+% Convert to grayscale
+grayImage = rgb2gray(rgbImage);
+
+% Display the original grayscale image
+%figure;
+subplot(1,2,1);
+imshow(grayImage);
+title('Original Grayscale Image');
+
+% Thresholding: Pixels below 50 are black, pixels above 150 are white
+thresholdedImage = grayImage;
+thresholdedImage(thresholdedImage < 50) = 0;      % Set pixels below 50 to black
+thresholdedImage(thresholdedImage > 150) = 255;    % Set pixels above 150 to white
+
+% Display the thresholded image
+%figure;
+subplot(1,2,2);
+imshow(thresholdedImage);
+title('Thresholded Image');
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+exp2
+
+% Image Enhancement
+I=imread('apple.jpeg');
+subplot(4,2,1); imshow(I); title('Original Image');
+g=rgb2gray(I);
+subplot(4,2,5); imshow(g); title('Gray Image');
+J=imadjust(g,[0.3 0.7],[]);
+subplot(4,2,3); imshow(J); title('Enhanced Image');
+D= imadjust(I,[0.2 0.3 0; 0.6 0.7 1],[]);
+subplot(4,2,4);imshow(D);title('Enhanced Image 2');
+
+% Histogram and Histogram Equalization
+subplot(4,2,7); imhist(g); title('Histogram of Gray Image');
+m=histeq(g);
+subplot(4,2,6); imshow(m); title('Equalized Image');
+subplot(4,2,8); imhist(m); title('Histogram of Equalized Image');
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+exp3
+
+% Read an image
+originalImage = imread('apple.jpeg'); % Replace 'example.jpg' with your image file
+
+% Convert the image to grayscale if it's in color
+if size(originalImage, 3) == 3
+originalImage = rgb2gray(originalImage);
+end
+
+% Display the original image
+subplot(2, 3, 1);
+imshow(originalImage);
+title('Original Image');
+
+% Compute the 2D Fourier Transform of the image
+fourierTransform = fft2(double(originalImage));
+
+% Shift the zero frequency components to the center
+fourierTransformShifted = fftshift(fourierTransform);
+
+% Create a simple low-pass filter (e.g., a circular mask)
+[M, N] = size(originalImage);
+radius = 50; % Adjust the radius to control the filter size
+[x, y] = meshgrid(1:N, 1:M);
+centerX = N/2;
+centerY = M/2;
+mask = (x - centerX).^2 + (y - centerY).^2 <= radius^2;
+
+% Apply the filter by multiplying it with the Fourier Transform
+filteredTransform = fourierTransformShifted .* mask;
+
+% Shift the frequency components back to their original positions
+filteredTransformShifted = ifftshift(filteredTransform);
+
+% Compute the inverse Fourier Transform to get the filtered image
+filteredImage = ifft2(filteredTransformShifted);
+
+% Display the filtered image
+subplot(2, 3, 2);
+imshow(abs(filteredImage), []);
+title('Filtered Image');
+
+% Display the magnitude of the Fourier Transform
+subplot(2, 3, 3);
+imshow(log(1 + abs(fourierTransformShifted)), []);
+title('Magnitude of Fourier Transform');
+
+% Display the filter mask
+subplot(2, 3, 4);
+imshow(mask, []);
+title('Filter Mask');
+
+% Display the phase of the Fourier Transform
+subplot(2, 3, 5);
+imshow(angle(fourierTransformShifted), []);
+title('Phase of Fourier Transform');
+
+% Display the phase of the filtered image
+subplot(2, 3, 6);
+imshow(angle(filteredImage), []);
+title('Phase of Filtered Image');
+
+% Wait for user input before closing the figure
+pause;
+close;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load an image
 img = imread('xyz.jpg'); % Replace 'xyz.jpg' with your image file
 % Convert the image to grayscale if it's in color
